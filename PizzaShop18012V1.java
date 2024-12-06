@@ -1,97 +1,16 @@
 import java.util.Scanner;
 import java.util.InputMismatchException;
-
-
-class Pizza {
-    private final String name;
-    private final double basePrice;
-    private final int size;
-
-    public Pizza(String name, double basePrice, int size) {
-        this.name = name;
-        this.basePrice = basePrice;
-        this.size = size;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public double getBasePrice() {
-        return basePrice;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public String getSizeAsString() {
-        switch (size) {
-            case 1: return "Small";
-            case 2: return "Medium";
-            case 3: return "Large";
-            default: return "Unknown";
-        }
-    }
-}
-
-class Topping {
-    private final String name;
-    private final double price;
-
-    public Topping(String name, double price) {
-        this.name = name;
-        this.price = price;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-}
-
-class PizzaOrder {
-    private final Pizza pizza;
-    private final int size;
-    private final int quantity;
-    private final Topping[] toppings;
-
-    public PizzaOrder(Pizza pizza, int size, int quantity, Topping[] toppings) {
-        this.pizza = pizza;
-        this.size = size;
-        this.quantity = quantity;
-        this.toppings = toppings;
-    }
-
-    public Pizza getPizza() {
-        return pizza;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public double calculateTotal() {
-        double total = pizza.getBasePrice() * quantity;
-        for (Topping topping : toppings) {
-            if (topping != null) {
-                total += topping.getPrice() * quantity;
-            }
-        }
-        return total;
-    }
-}
+import java.util.regex.Pattern;
 
 class Customer {
     private String name;
     private String phone;
+    private String email;
 
-    public Customer(String name, String phone) {
+    public Customer(String name, String phone, String email) {
         this.name = name;
         this.phone = phone;
+        this.email = email;
     }
 
     public String getName() {
@@ -101,45 +20,9 @@ class Customer {
     public String getPhone() {
         return phone;
     }
-}
 
-
-class Menu {
-    private final String[] pizzaMenu = {"Cheese Burst Pizza", "Veggie Pizza", "Paneer Pizza", "Pepperoni Pizza"};
-    private final double[] pizzaPrices = {250, 150, 200, 400};
-    private final String[] toppingMenu = {"Mushrooms", "Onions", "Bell Peppers", "Olives", "Bacon"};
-    private final double[] toppingPrices = {20, 30, 25, 10, 50};
-
-    public void displayMenu() {
-        System.out.println("\n--- Pizza Menu ---");
-        for (int i = 0; i < pizzaMenu.length; i++) {
-            System.out.printf("%d. %s - INR %.2f%n", i + 1, pizzaMenu[i], pizzaPrices[i]);
-        }
-        System.out.printf("%d. Exit%n", 6);
-        System.out.println("\n--- Available Toppings ---");
-        for (int i = 0; i < toppingMenu.length; i++) {
-            System.out.printf("%d. %s - INR %.2f%n", i + 1, toppingMenu[i], toppingPrices[i]);
-        }
-    }
-
-    public int getPizzaCount() {
-        return pizzaMenu.length;
-    }
-
-    public double getPizzaPrice(int index) {
-        return pizzaPrices[index];
-    }
-
-    public String[] getToppingMenu() {
-        return toppingMenu;
-    }
-
-    public double getToppingPrice(int index) {
-        return toppingPrices[index];
-    }
-
-    public String[] getPizzaMenu() {
-        return pizzaMenu;
+    public String getEmail() {
+        return email;
     }
 }
 
@@ -228,9 +111,29 @@ class Shop {
         }
     }
 
-    public String getCustomerDetails(String prompt) {
-        System.out.print(prompt);
-        return scanner.nextLine();
+    public void printOrderSummary() {
+        orderManager.printOrderSummary();
+    }
+
+    public void printBill(Customer customer, double totalBill) {
+        System.out.printf("\n--- Bill ---\nCustomer Name: %s\nPhone Number: %s\nEmail: %s\nTotal Amount: INR %.2f%n", 
+                          customer.getName(), customer.getPhone(), customer.getEmail(), totalBill);
+    }
+
+    public int getOrderCount() {
+        return orderManager.getOrderCount();
+    }
+
+    public String getName() {
+        while (true) {
+            System.out.print("Enter your name: ");
+            String name = scanner.nextLine();
+            if (name.matches(".*\\d.*")) {
+                System.out.println("Name should not contain numbers! Please enter a valid name.");
+            } else {
+                return name;
+            }
+        }
     }
 
     public String getPhoneNumber() {
@@ -242,16 +145,14 @@ class Shop {
         }
     }
 
-    public void printOrderSummary() {
-        orderManager.printOrderSummary();
-    }
-
-    public void printBill(Customer customer, double totalBill) {
-        System.out.printf("\n--- Bill ---\nCustomer Name: %s\nPhone Number: %s\nTotal Amount: INR %.2f%n", customer.getName(), customer.getPhone(), totalBill);
-    }
-
-    public int getOrderCount() {
-        return orderManager.getOrderCount();
+    public String getEmail() {
+        while (true) {
+            System.out.print("Enter your email: ");
+            String email = scanner.nextLine();
+            String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
+            if (Pattern.matches(emailRegex, email)) return email;
+            System.out.println("Invalid email format! Please enter a valid email.");
+        }
     }
 }
 
@@ -301,7 +202,8 @@ class OrderManager {
         System.out.println("\n--- Order Summary ---");
         for (int i = 0; i < orderCount; i++) {
             PizzaOrder order = orders[i];
-            System.out.printf("Pizza: %s | Size: %s | Quantity: %d | Total Price: INR %.2f%n", order.getPizza().getName(), order.getPizza().getSizeAsString(), order.getQuantity(), order.calculateTotal());
+            System.out.printf("Pizza: %s | Size: %s | Quantity: %d | Total Price: INR %.2f%n", order.getPizza().getName(), 
+                              order.getPizza().getSizeAsString(), order.getQuantity(), order.calculateTotal());
         }
     }
 
@@ -310,23 +212,27 @@ class OrderManager {
     }
 }
 
-
 public class PizzaShop18012V1 {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         Shop shop = new Shop(scanner);
-        
+
         System.out.println("Welcome to Pizza Palace!");
         if (!shop.login()) {
             System.out.println("Invalid login credentials. Exiting.");
             return;
         }
-        
-        Customer customer = new Customer(shop.getCustomerDetails("Enter your name: "), shop.getPhoneNumber());
+
         double totalBill = shop.runShop();
-        
+
         if (shop.getOrderCount() > 0) {
             shop.printOrderSummary();
+
+            String name = shop.getName();
+            String phone = shop.getPhoneNumber();
+            String email = shop.getEmail();
+            Customer customer = new Customer(name, phone, email);
+
             shop.printBill(customer, totalBill);
         } else {
             System.out.println("No order placed.");
