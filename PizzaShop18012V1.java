@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.InputMismatchException;
 import java.util.regex.Pattern;
@@ -127,8 +128,10 @@ class Shop {
     public String getName() {
         while (true) {
             System.out.print("Enter your name: ");
-            String name = scanner.nextLine();
-            if (name.matches(".*\\d.*")) {
+            String name = scanner.nextLine().trim(); 
+            if (name.isEmpty() || name.contains(" ")) {
+                System.out.println("Name should not contain spaces or be empty! Please enter a valid name.");
+            } else if (name.matches(".*\\d.*")) {
                 System.out.println("Name should not contain numbers! Please enter a valid name.");
             } else {
                 return name;
@@ -157,36 +160,34 @@ class Shop {
 }
 
 class OrderManager {
-    private final PizzaOrder[] orders = new PizzaOrder[50];
-    private int orderCount = 0;
+    private final ArrayList<PizzaOrder> orders = new ArrayList<>();
 
     public double processOrder(int pizzaChoice, int size, int quantity, Menu menu, Scanner scanner) {
-        String pizzaName = menu.getPizzaMenu()[pizzaChoice - 1];
+        String pizzaName = menu.getPizzaMenu().get(pizzaChoice - 1);
         double pizzaPrice = menu.getPizzaPrice(pizzaChoice - 1);
         Pizza pizza = new Pizza(pizzaName, pizzaPrice, size);
-        Topping[] toppings = addToppingsToOrder(menu, scanner);
+        ArrayList<Topping> toppings = addToppingsToOrder(menu, scanner);
         PizzaOrder order = new PizzaOrder(pizza, size, quantity, toppings);
 
-        orders[orderCount++] = order;
+        orders.add(order);
         return order.calculateTotal();
     }
 
-    private Topping[] addToppingsToOrder(Menu menu, Scanner scanner) {
-        Topping[] selectedToppings = new Topping[5];
-        int toppingCount = 0;
+    private ArrayList<Topping> addToppingsToOrder(Menu menu, Scanner scanner) {
+        ArrayList<Topping> selectedToppings = new ArrayList<>();
 
         while (true) {
             System.out.println("Choose a topping (or type 0 to finish):");
-            for (int i = 0; i < menu.getToppingMenu().length; i++) {
-                System.out.printf("%d. %s - INR %.2f%n", i + 1, menu.getToppingMenu()[i], menu.getToppingPrice(i));
+            for (int i = 0; i < menu.getToppingMenu().size(); i++) {
+                System.out.printf("%d. %s - INR %.2f%n", i + 1, menu.getToppingMenu().get(i), menu.getToppingPrice(i));
             }
 
             try {
                 int toppingChoice = scanner.nextInt();
                 scanner.nextLine();
                 if (toppingChoice == 0) break;
-                if (toppingChoice > 0 && toppingChoice <= menu.getToppingMenu().length) {
-                    selectedToppings[toppingCount++] = new Topping(menu.getToppingMenu()[toppingChoice - 1], menu.getToppingPrice(toppingChoice - 1));
+                if (toppingChoice > 0 && toppingChoice <= menu.getToppingMenu().size()) {
+                    selectedToppings.add(new Topping(menu.getToppingMenu().get(toppingChoice - 1), menu.getToppingPrice(toppingChoice - 1)));
                 } else {
                     System.out.println("Invalid topping choice.");
                 }
@@ -200,15 +201,138 @@ class OrderManager {
 
     public void printOrderSummary() {
         System.out.println("\n--- Order Summary ---");
-        for (int i = 0; i < orderCount; i++) {
-            PizzaOrder order = orders[i];
-            System.out.printf("Pizza: %s | Size: %s | Quantity: %d | Total Price: INR %.2f%n", order.getPizza().getName(), 
-                              order.getPizza().getSizeAsString(), order.getQuantity(), order.calculateTotal());
+        for (PizzaOrder order : orders) {
+            System.out.printf("Pizza: %s | Size: %s | Quantity: %d | Total Price: INR %.2f%n", 
+                              order.getPizza().getName(), 
+                              order.getPizza().getSizeAsString(), 
+                              order.getQuantity(), 
+                              order.calculateTotal());
         }
     }
 
     public int getOrderCount() {
-        return orderCount;
+        return orders.size();
+    }
+}
+
+class Pizza {
+    private String name;
+    private double price;
+    private int size;
+
+    public Pizza(String name, double price, int size) {
+        this.name = name;
+        this.price = price;
+        this.size = size;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getSizeAsString() {
+        switch (size) {
+            case 1: return "Small";
+            case 2: return "Medium";
+            case 3: return "Large";
+            default: return "Unknown";
+        }
+    }
+
+    public double getPrice() {
+        return price;
+    }
+}
+
+class Topping {
+    private String name;
+    private double price;
+
+    public Topping(String name, double price) {
+        this.name = name;
+        this.price = price;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+}
+
+class PizzaOrder {
+    private Pizza pizza;
+    private int size;
+    private int quantity;
+    private ArrayList<Topping> toppings;
+
+    public PizzaOrder(Pizza pizza, int size, int quantity, ArrayList<Topping> toppings) {
+        this.pizza = pizza;
+        this.size = size;
+        this.quantity = quantity;
+        this.toppings = toppings;
+    }
+
+    public Pizza getPizza() {
+        return pizza;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public double calculateTotal() {
+        double total = pizza.getPrice() * quantity;
+        for (Topping topping : toppings) {
+            total += topping.getPrice();
+        }
+        return total;
+    }
+}
+
+class Menu {
+    private final ArrayList<String> pizzaMenu = new ArrayList<>();
+    private final ArrayList<String> toppingMenu = new ArrayList<>();
+
+    public Menu() {
+        pizzaMenu.add("Margherita");
+        pizzaMenu.add("Pepperoni");
+        pizzaMenu.add("Veggie");
+
+        toppingMenu.add("Olives");
+        toppingMenu.add("Mushrooms");
+        toppingMenu.add("Peppers");
+    }
+
+    public ArrayList<String> getPizzaMenu() {
+        return pizzaMenu;
+    }
+
+    public ArrayList<String> getToppingMenu() {
+        return toppingMenu;
+    }
+
+    public double getPizzaPrice(int index) {
+        double[] prices = {200, 250, 300};
+        return prices[index];
+    }
+
+    public double getToppingPrice(int index) {
+        double[] prices = {20, 25, 30};
+        return prices[index];
+    }
+
+    public int getPizzaCount() {
+        return pizzaMenu.size();
+    }
+
+    public void displayMenu() {
+        System.out.println("\n--- Pizza Menu ---");
+        for (int i = 0; i < pizzaMenu.size(); i++) {
+            System.out.printf("%d. %s - INR %.2f%n", i + 1, pizzaMenu.get(i), getPizzaPrice(i));
+        }
     }
 }
 
